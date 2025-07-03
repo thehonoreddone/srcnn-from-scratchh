@@ -1,0 +1,165 @@
+# SRCNN - Super Resolution CNN Projesi Açıklaması
+
+Bu doküman, SRCNN (Super Resolution Convolutional Neural Network) projesinin amacını, bileşenlerini ve her bir kod parçasının ne yaptığını açıklamaktadır. Projenin temel amacı, düşük çözünürlüklü bir görüntüyü daha yüksek çözünürlüklü bir görüntüye dönüştürmek için derin öğrenme temelli bir super resolution modeli geliştirmektir.
+
+## Proje Genel Bakışı
+
+Bu proje, ["Image Super-Resolution Using Deep Convolutional Networks"](https://arxiv.org/abs/1501.00092) (Dong et al., 2014) makalesinde tanımlanan SRCNN modelini, saf Python ve NumPy kullanarak sıfırdan implementasyon yapmayı amaçlamaktadır. Hiçbir derin öğrenme kütüphanesi (TensorFlow, PyTorch, vb.) kullanılmamıştır.
+
+### Projenin Amacı
+
+1. Düşük çözünürlüklü görüntüleri daha yüksek çözünürlüklü hale getirmek
+2. Deep learning prensiplerini sıfırdan uygulayarak temel kavramları anlamak
+3. Konvolüsyon, aktivasyon fonksiyonları gibi derin öğrenme katmanlarını NumPy ile implemente etmek
+4. Bicubic interpolasyon gibi klasik super resolution tekniklerinin ötesine geçmek
+
+## Projenin Yapısı ve Kod Bileşenleri
+
+### 1. `src/layers.py` - Temel Yapı Taşları
+
+Bu dosya, derin öğrenme modelimiz için gerekli temel katmanları içermektedir:
+
+- `ConvLayer`: Konvolüsyon işlemini sıfırdan NumPy ile implemente eden sınıf. Filtreleri (kernels), girdi kanallarına uygular ve bir çıktı oluşturur.
+- `relu`: Rectified Linear Unit aktivasyon fonksiyonu (max(0, x) işlemi).
+- `PatchExtraction`: SRCNN'nin ilk katmanı - görüntüden özellik çıkarma ve temsil etme işlemi yapar.
+- `NonLinearMapping`: SRCNN'nin ikinci katmanı - doğrusal olmayan özellik dönüşümü yapar.
+- `Reconstruction`: SRCNN'nin üçüncü katmanı - özelliklerden yüksek çözünürlüklü görüntü yeniden oluşturur.
+
+Bu katmanlar, SRCNN'nin temel yapı taşlarıdır ve modelin parametrelerini ve ileri geçiş işlemlerini tanımlar.
+
+### 2. `src/model.py` - SRCNN Model Mimarisi
+
+Bu dosya, SRCNN modelinin ana mimarisini tanımlar:
+
+- `SRCNN` sınıfı: Makalede önerilen üç katmanlı mimarinin uygulaması:
+  1. Patch extraction and representation: 9x9 filtreyle 64 özellik haritası çıkarır
+  2. Non-linear mapping: 1x1 filtreyle 64 özellik haritasını 32 özellik haritasına dönüştürür
+  3. Reconstruction: 5x5 filtreyle 32 özellik haritasından orijinal görüntüyü yeniden oluşturur
+
+Bu sınıf ayrıca model ağırlıklarını kaydetmek ve yüklemek için fonksiyonları içerir.
+
+### 3. `src/utils.py` - Yardımcı Fonksiyonlar
+
+Bu dosya, veri işleme, görüntü dönüşümleri ve değerlendirme için yardımcı fonksiyonları içerir:
+
+- `load_image`: Görüntüleri yükler ve RGB formatına dönüştürür
+- `preprocess_image`: SRCNN için görüntüleri hazırlar:
+  - RGB'den YCbCr renk uzayına dönüştürme (Y: parlaklık, Cb-Cr: renk)
+  - Sadece Y kanalı üzerinde çalışma (modelin odaklandığı kanal)
+  - Düşük çözünürlüklü (LR) versiyon oluşturma
+  - Bicubic interpolasyon ile LR görüntüyü yüksek çözünürlüğe çıkarma
+- `postprocess_image`: SRCNN çıktısını tam RGB görüntüye geri dönüştürür
+- `calculate_psnr`: İki görüntü arasındaki PSNR (Peak Signal-to-Noise Ratio) değerini hesaplar
+- `bicubic_kernel` ve `bicubic_resize`: Bicubic interpolasyon algoritmasının sıfırdan uygulaması
+- `SRCNNDataset`: Eğitim veri setini yönetir, görüntülerden patch'ler (küçük parçalar) çıkarır ve batch'ler oluşturur
+
+### 4. `src/train.py` - Eğitim ve Test Fonksiyonları
+
+Bu dosya, modelin eğitimi ve testi için gerekli prosedürleri içerir:
+
+- `mean_squared_error`: Kayıp fonksiyonu, tahmin ile gerçek değer arasındaki MSE'yi hesaplar
+- `optimize`: Basit bir gradyan iniş optimizasyonu uygulamasıdır (gerçek backpropagation yerine basitleştirilmiş bir simülasyon)
+- `train`: Eğitim döngüsünü yöneten ana fonksiyon
+- `validate`: Test görüntüleri üzerinde modeli değerlendirir
+- `test`: Eğitilmiş modeli test eder ve sonuçları kaydeder
+- `main`: Argümanları parse eder ve uygun işlevi çağırır
+
+### 5. `src/eval.py` - Değerlendirme Scripti
+
+Bu dosya, eğitilmiş modeli farklı ölçeklendirme faktörleriyle değerlendirmek için kullanılır:
+
+- `evaluate_model`: Farklı ölçeklerde (2x, 3x, 4x) test görüntüleri üzerinde model performansını ölçer
+- `print_table`: Değerlendirme sonuçlarını tablo formatında yazdırır
+- `main`: Değerlendirme için argümanları parse eder
+
+### 6. `quick_train.py` - Hızlı Test Scripti
+
+Bu dosya, modeli hızlıca test etmek için basit bir scripttir:
+
+- `create_simple_model`: Basit bir SRCNN modeli oluşturur ve kaydeder
+- `quick_test`: Bir test görüntüsü üzerinde modeli çalıştırır
+
+### 7. `test_image.py` - Tek Görüntü Testi
+
+Bu dosya, tek bir görüntü üzerinde SRCNN modelini test etmek için kullanılır:
+
+- `test_single_image`: Verilen görüntüyü modelle işler ve sonuçları kaydeder
+- Orijinal, bicubic ve SRCNN sonuçlarını karşılaştırır
+
+## İş Akışı ve Görev Sırası
+
+Projenin görev sıralaması şu şekildedir:
+
+1. **Temel Bileşenlerin Oluşturulması**:
+   - Konvolüsyon ve aktivasyon fonksiyonları gibi temel yapı taşlarının implementasyonu
+   - Bicubic interpolasyon algoritmasının implementasyonu
+
+2. **Model Mimarisinin Tanımlanması**:
+   - Makalede önerilen SRCNN mimarisinin code edilmesi
+   - Üç katmanlı modelin oluşturulması (patch extraction, non-linear mapping, reconstruction)
+
+3. **Veri İşleme Altyapısının Hazırlanması**:
+   - Görüntü yükleme ve ön işleme fonksiyonlarının yazılması
+   - Veri seti oluşturma ve batch'leme mekanizmalarının oluşturulması
+
+4. **Eğitim Altyapısının Oluşturulması**:
+   - Kayıp fonksiyonu ve optimizasyon prosedürünün implementasyonu
+   - Eğitim ve doğrulama döngülerinin yazılması
+
+5. **Test ve Değerlendirme Mekanizmalarının Hazırlanması**:
+   - PSNR hesaplama ve görsel karşılaştırma işlevlerinin oluşturulması
+   - Farklı ölçeklendirme faktörleriyle değerlendirme scriptlerinin yazılması
+
+6. **Model Eğitimi ve Sonuçların Değerlendirilmesi**:
+   - Modelin eğitilmesi, checkpoint'lerin kaydedilmesi
+   - Set5 gibi standart veri setleri üzerinde test yapılması
+
+## Teknik Detaylar
+
+### SRCNN Mimarisi
+
+SRCNN, düşük çözünürlüklü bir görüntüyü daha yüksek çözünürlüklü bir görüntüye dönüştürmek için tasarlanmış üç katmanlı bir CNN'dir:
+
+1. **Patch Extraction and Representation**: 9x9 filtre boyutlu konvolüsyon katmanı, 64 filtre
+   - Amacı: Görüntüden detayları çıkarmak ve temsil etmek
+   - Geniş filtre boyutu (9x9), daha geniş bir reseptor alanı sağlar
+
+2. **Non-linear Mapping**: 1x1 filtre boyutlu konvolüsyon katmanı, 32 filtre
+   - Amacı: Düşük çözünürlüklü özellik uzayından yüksek çözünürlüklü özellik uzayına doğrusal olmayan bir dönüşüm sağlamak
+   - 1x1 konvolüsyon, kanallar arası dönüşüm yapar (boyut değiştirmeden)
+
+3. **Reconstruction**: 5x5 filtre boyutlu konvolüsyon katmanı, 1 filtre
+   - Amacı: Özelliklerden yüksek çözünürlüklü görüntüyü yeniden oluşturmak
+   - Orta boyutlu filtre (5x5), detayları koruyarak yeniden yapılandırmaya olanak tanır
+
+### Performans Ölçütü
+
+Modelin performansı, PSNR (Peak Signal-to-Noise Ratio) metriği kullanılarak değerlendirilir. PSNR değeri ne kadar yüksekse, oluşturulan görüntü orijinal görüntüye o kadar yakındır. Bu metrik, iki görüntü arasındaki piksel düzeyindeki farkları ölçer.
+
+## Sınırlamalar ve Özellikler
+
+- **Sıfırdan Implementasyon**: Kod tamamen saf Python ve NumPy ile yazılmıştır, derin öğrenme kütüphaneleri kullanılmamıştır
+- **Optimize Edilmemiş Konvolüsyon**: Gerçek derin öğrenme kütüphanelerindeki gibi optimize edilmiş implementasyonlar yerine eğitici amaçlı saf NumPy kullanılmıştır
+- **Basitleştirilmiş Optimizasyon**: Gerçek backpropagation yerine basitleştirilmiş bir optimizasyon mekanizması kullanılmıştır
+- **Sadece Y Kanalı**: YCbCr renk uzayının sadece Y (parlaklık) kanalı üzerinde çalışır, renkler bicubic interpolasyondan gelir
+
+## Kullanım Örnekleri
+
+### Modeli Eğitmek İçin:
+```
+python -m src.train --mode train --train_dir data/train --test_dir Set5 --epochs 50
+```
+
+### Modeli Test Etmek İçin:
+```
+python -m src.train --mode test --test_dir Set5 --model_path models/srcnn_final.npy --output_dir results
+```
+
+### Tek Bir Görüntüyü Test Etmek İçin:
+```
+python test_image.py --image Set5/butterfly.png --output_dir test_output --scale 2
+```
+
+## Sonuç
+
+Bu proje, derin öğrenme modellerinin temel kavramlarını anlama ve sıfırdan implementasyon yapma amacıyla oluşturulmuştur. SRCNN mimarisi, hem yeni başlayanlar için öğrenme aracı olarak hem de düşük çözünürlüklü görüntüleri iyileştirmek için pratik bir araç olarak hizmet etmektedir. Modern derin öğrenme kütüphanelerinin perde arkasında neler olduğunu anlamak için önemli bir çalışmadır. 
