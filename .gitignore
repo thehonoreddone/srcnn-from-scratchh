@@ -1,0 +1,35 @@
+# Python derleme dosyaları
+__pycache__/
+*.py[cod]
+*.so
+*.pyd
+*.pyo
+
+# Jupyter notebook checkpointleri
+.ipynb_checkpoints/
+
+# Model ağırlıkları ve büyük veri dosyaları
+models/*.npy
+
+# Çıktı ve sonuç klasörleri
+results/
+logs/
+test_output/
+eval_results/
+
+# Geçici dosyalar
+*.tmp
+*.log
+.DS_Store
+Thumbs.db
+
+# Veri setleri (isteğe bağlı, genellikle hariç tutulmaz)
+# data/
+# Set5/
+
+# Kişisel/çalışma dosyaları
+*.swp
+*.bak
+
+# VSCode ayarları
+.vscode/ 
