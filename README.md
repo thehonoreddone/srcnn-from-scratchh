@@ -68,9 +68,9 @@ SRCNN, düşük çözünürlüklü bir görüntüyü daha yüksek çözünürlü
 
 ## Nasıl Çalışır?
 
-1. Düşük çözünürlüklü bir görüntü alınır ve bicubic interpolation ile orijinal boyuta getirilir
-2. Bu bicubic interpolasyonlu görüntü SRCNN modeline giriş olarak verilir
-3. Model, bicubic görüntüden daha yüksek kaliteli bir süper çözünürlüklü görüntü üretir
+1. Düşük çözünürlüklü bir görüntü alınır ve bicubic interpolation ile orijinal boyuta getirilir.
+2. Bu bicubic interpolasyonlu görüntü SRCNN modeline giriş olarak verilir.
+3. Model, bicubic görüntüden daha yüksek kaliteli bir süper çözünürlüklü görüntü üretir.
 
 ## Performans Değerlendirmesi
 
